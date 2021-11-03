@@ -1198,7 +1198,7 @@ public final class String
      * @return the number of bytes successfully decoded, at most len
      */
     /* package-private */
-    static int decodeASCII(byte[] sa, int sp, char[] da, int dp, int len) {
+    public static int decodeASCII(byte[] sa, int sp, char[] da, int dp, int len) {
         if (!StringCoding.hasNegatives(sa, sp, len)) {
             StringLatin1.inflate(sa, sp, da, dp, len);
             return len;
