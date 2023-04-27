@@ -310,7 +310,7 @@ final class StringLatin1 {
             }
             if (i < len) {
                 if (canEncode(newChar)) {
-                    byte[] buf = StringConcatHelper.newArray(len);
+                    byte[] buf = new byte[len];
                     for (int j = 0; j < i; j++) {    // TBD arraycopy?
                         buf[j] = value[j];
                     }
