@@ -177,7 +177,7 @@ final class StringLatin1 {
             char c1 = getChar(value, k);
             char c2 = StringUTF16.getChar(other, k);
             if (c1 != c2) {
-                c1 = (char) CharacterDataLatin1.instance.toUpperCase(c1);
+                c1 = Character.toUpperCase(c1);
                 c2 = Character.toUpperCase(c2);
                 if (c1 != c2) {
                     c1 = Character.toLowerCase(c1);
@@ -210,7 +210,13 @@ final class StringLatin1 {
             // Note: fromIndex might be near -1>>>1.
             return -1;
         }
-        return indexOfChar(value, ch, fromIndex, max);
+        byte c = (byte)ch;
+        for (int i = fromIndex; i < max; i++) {
+            if (value[i] == c) {
+               return i;
+            }
+        }
+        return -1;
     }
 
     @IntrinsicCandidate
@@ -396,8 +402,8 @@ final class StringLatin1 {
             if (c1 == c2) {
                 continue;
             }
-            int u1 = CharacterDataLatin1.instance.toUpperCase(c1);
-            int u2 = CharacterDataLatin1.instance.toUpperCase(c2);
+            char u1 = Character.toUpperCase(c1);
+            char u2 = Character.toUpperCase(c2);
             if (u1 == u2) {
                 continue;
             }
@@ -418,7 +424,7 @@ final class StringLatin1 {
             if (c1 == c2) {
                 continue;
             }
-            char u1 = (char) CharacterDataLatin1.instance.toUpperCase(c1);
+            char u1 = Character.toUpperCase(c1);
             char u2 = Character.toUpperCase(c2);
             if (u1 == u2) {
                 continue;
@@ -440,7 +446,7 @@ final class StringLatin1 {
         // Now check if there are any characters that need to be changed, or are surrogate
         for (first = 0 ; first < len; first++) {
             int cp = value[first] & 0xff;
-            if (cp != CharacterDataLatin1.instance.toLowerCase(cp)) {  // no need to check Character.ERROR
+            if (cp != Character.toLowerCase(cp)) {  // no need to check Character.ERROR
                 break;
             }
         }
@@ -455,7 +461,7 @@ final class StringLatin1 {
                                                        // lowerCase characters.
         for (int i = first; i < len; i++) {
             int cp = value[i] & 0xff;
-            cp = CharacterDataLatin1.instance.toLowerCase(cp);
+            cp = Character.toLowerCase(cp);
             if (!canEncode(cp)) {                      // not a latin1 character
                 return toLowerCaseEx(str, value, first, locale, false);
             }
@@ -479,7 +485,7 @@ final class StringLatin1 {
             if (localeDependent) {
                 lowerChar = ConditionalSpecialCasing.toLowerCaseEx(str, i, locale);
             } else {
-                lowerChar = CharacterDataLatin1.instance.toLowerCase(srcChar);
+                lowerChar = Character.toLowerCase(srcChar);
             }
             if (Character.isBmpCodePoint(lowerChar)) {    // Character.ERROR is not a bmp
                 StringUTF16.putChar(result, resultOffset++, lowerChar);
@@ -514,7 +520,7 @@ final class StringLatin1 {
         // Now check if there are any characters that need to be changed, or are surrogate
         for (first = 0 ; first < len; first++ ) {
             int cp = value[first] & 0xff;
-            if (cp != CharacterDataLatin1.instance.toUpperCaseEx(cp)) {   // no need to check Character.ERROR
+            if (cp != Character.toUpperCaseEx(cp)) {   // no need to check Character.ERROR
                 break;
             }
         }
@@ -530,7 +536,7 @@ final class StringLatin1 {
                                                        // upperCase characters.
         for (int i = first; i < len; i++) {
             int cp = value[i] & 0xff;
-            cp = CharacterDataLatin1.instance.toUpperCaseEx(cp);
+            cp = Character.toUpperCaseEx(cp);
             if (!canEncode(cp)) {                      // not a latin1 character
                 return toUpperCaseEx(str, value, first, locale, false);
             }
@@ -554,7 +560,7 @@ final class StringLatin1 {
             if (localeDependent) {
                 upperChar = ConditionalSpecialCasing.toUpperCaseEx(str, i, locale);
             } else {
-                upperChar = CharacterDataLatin1.instance.toUpperCaseEx(srcChar);
+                upperChar = Character.toUpperCaseEx(srcChar);
             }
             if (Character.isBmpCodePoint(upperChar)) {
                 StringUTF16.putChar(result, resultOffset++, upperChar);
@@ -564,7 +570,7 @@ final class StringLatin1 {
                         upperCharArray =
                             ConditionalSpecialCasing.toUpperCaseCharArray(str, i, locale);
                     } else {
-                        upperCharArray = CharacterDataLatin1.instance.toUpperCaseCharArray(srcChar);
+                        upperCharArray = Character.toUpperCaseCharArray(srcChar);
                     }
                 } else {
                     upperCharArray = Character.toChars(upperChar);
@@ -601,8 +607,8 @@ final class StringLatin1 {
         int length = value.length;
         int left = 0;
         while (left < length) {
-            char ch = getChar(value, left);
-            if (ch != ' ' && ch != '\t' && !CharacterDataLatin1.instance.isWhitespace(ch)) {
+            char ch = (char)(value[left] & 0xff);
+            if (ch != ' ' && ch != '\t' && !Character.isWhitespace(ch)) {
                 break;
             }
             left++;
@@ -614,8 +620,8 @@ final class StringLatin1 {
         int length = value.length;
         int right = length;
         while (0 < right) {
-            char ch = getChar(value, right - 1);
-            if (ch != ' ' && ch != '\t' && !CharacterDataLatin1.instance.isWhitespace(ch)) {
+            char ch = (char)(value[right - 1] & 0xff);
+            if (ch != ' ' && ch != '\t' && !Character.isWhitespace(ch)) {
                 break;
             }
             right--;
@@ -629,24 +635,33 @@ final class StringLatin1 {
             return "";
         }
         int right = lastIndexOfNonWhitespace(value);
-        boolean ifChanged = (left > 0) || (right < value.length);
-        return ifChanged ? newString(value, left, right - left) : null;
+        return ((left > 0) || (right < value.length)) ? newString(value, left, right - left) : null;
     }
 
     public static String stripLeading(byte[] value) {
         int left = indexOfNonWhitespace(value);
+        if (left == value.length) {
+            return "";
+        }
         return (left != 0) ? newString(value, left, value.length - left) : null;
     }
 
     public static String stripTrailing(byte[] value) {
         int right = lastIndexOfNonWhitespace(value);
+        if (right == 0) {
+            return "";
+        }
         return (right != value.length) ? newString(value, 0, right) : null;
     }
 
-    private static final class LinesSpliterator implements Spliterator<String> {
+    private final static class LinesSpliterator implements Spliterator<String> {
         private byte[] value;
         private int index;        // current index, modified on advance/split
         private final int fence;  // one past last index
+
+        LinesSpliterator(byte[] value) {
+            this(value, 0, value.length);
+        }
 
         private LinesSpliterator(byte[] value, int start, int length) {
             this.value = value;
@@ -656,7 +671,7 @@ final class StringLatin1 {
 
         private int indexOfLineSeparator(int start) {
             for (int current = start; current < fence; current++) {
-                char ch = getChar(value, current);
+                byte ch = value[current];
                 if (ch == '\n' || ch == '\r') {
                     return current;
                 }
@@ -666,9 +681,9 @@ final class StringLatin1 {
 
         private int skipLineSeparator(int start) {
             if (start < fence) {
-                if (getChar(value, start) == '\r') {
+                if (value[start] == '\r') {
                     int next = start + 1;
-                    if (next < fence && getChar(value, next) == '\n') {
+                    if (next < fence && value[next] == '\n') {
                         return next + 1;
                     }
                 }
@@ -734,7 +749,7 @@ final class StringLatin1 {
     }
 
     static Stream<String> lines(byte[] value) {
-        return StreamSupport.stream(LinesSpliterator.spliterator(value), false);
+        return StreamSupport.stream(new LinesSpliterator(value), false);
     }
 
     public static void putChar(byte[] val, int index, int c) {
@@ -763,9 +778,6 @@ final class StringLatin1 {
     }
 
     public static String newString(byte[] val, int index, int len) {
-        if (len == 0) {
-            return "";
-        }
         return new String(Arrays.copyOfRange(val, index, index + len),
                           LATIN1);
     }
