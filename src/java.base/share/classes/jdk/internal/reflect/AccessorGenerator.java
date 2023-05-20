@@ -428,7 +428,15 @@ class AccessorGenerator implements ClassFileConstants {
     }
 
     private static String internalize(String className) {
-        return className.replace('.', '/');
+        boolean isCandidate = false;
+        if (className.equals("org.apache.tools.ant.types.Commandline$Argument")) {
+            isCandidate = true;
+            System.out.println("DCDCDCDC --> found potential Bad class name: "+ className);
+        }
+        String ret = className.replace('.', '/');
+        if (isCandidate)
+            System.out.println("DCDCDCDC --> ret: " + ret + ", className: " + className);
+        return ret;
     }
 
     protected void emitConstructor() {

@@ -3572,13 +3572,24 @@ public final class String
      *          occurrence of {@code oldChar} with {@code newChar}.
      */
     public String replace(char oldChar, char newChar) {
+        boolean isCandidate = false;
+        if (this.equals("org.apache.tools.ant.types.Commandline$Argument") && oldChar == '.' && newChar == '/')
+            isCandidate = true;
         if (oldChar != newChar) {
+            if(isCandidate)
+                System.out.println("DCDCDCDC-String.replace-1");
             String ret = isLatin1() ? StringLatin1.replace(value, oldChar, newChar)
                                     : StringUTF16.replace(value, oldChar, newChar);
+            
             if (ret != null) {
                 return ret;
             }
+            if(isCandidate)
+                System.out.println("DCDCDCDC-String.replace-2: "+ ret);
+
         }
+        if(isCandidate)
+            System.out.println("DCDCDCDC-String.replace-3");
         return this;
     }
 

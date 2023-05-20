@@ -285,6 +285,7 @@ class MethodAccessorGenerator extends AccessorGenerator {
         asm.emitShort(add(numCPEntries, S1));
 
         final String generatedName = generateName(isConstructor, forSerialization);
+        boolean isMethodAccessor9 = generatedName.equals("jdk/internal/reflect/GeneratedMethodAccessor9");
         asm.emitConstantPoolUTF8(generatedName);
         asm.emitConstantPoolClass(asm.cpi());
         thisClass = asm.cpi();
@@ -300,7 +301,10 @@ class MethodAccessorGenerator extends AccessorGenerator {
         }
         asm.emitConstantPoolClass(asm.cpi());
         superClass = asm.cpi();
-        asm.emitConstantPoolUTF8(getClassName(declaringClass, false));
+        String declaringClassName = getClassName(declaringClass, false);
+        if(isMethodAccessor9)
+            System.out.println("DCDCDCDC--MethodAccessorGenerator.generate: declaringClassName:" + declaringClassName);
+        asm.emitConstantPoolUTF8(declaringClassName);
         asm.emitConstantPoolClass(asm.cpi());
         targetClass = asm.cpi();
         short serializationTargetClassIdx = (short) 0;

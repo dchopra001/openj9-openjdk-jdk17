@@ -300,7 +300,14 @@ final class StringLatin1 {
     }
 
     public static String replace(byte[] value, char oldChar, char newChar) {
+        boolean isCandidate = false;
+        String inputString = new String(value); 
+        if (inputString.equals("org.apache.tools.ant.types.Commandline$Argument") && oldChar == '.' && newChar == '/')
+            isCandidate = true;
+        
         if (canEncode(oldChar)) {
+            if (isCandidate)
+                System.out.println("DCDCDCDC --> StringLatin1.replace --> 1");
             int len = value.length;
             int i = -1;
             while (++i < len) {
@@ -310,6 +317,8 @@ final class StringLatin1 {
             }
             if (i < len) {
                 if (canEncode(newChar)) {
+                    if (isCandidate)
+                        System.out.println("DCDCDCDC --> StringLatin1.replace --> 2");
                     byte[] buf = StringConcatHelper.newArray(len);
                     for (int j = 0; j < i; j++) {    // TBD arraycopy?
                         buf[j] = value[j];
@@ -321,6 +330,8 @@ final class StringLatin1 {
                     }
                     return new String(buf, LATIN1);
                 } else {
+                    if (isCandidate)
+                        System.out.println("DCDCDCDC --> StringLatin1.replace --> 3");
                     byte[] buf = StringUTF16.newBytesFor(len);
                     // inflate from latin1 to UTF16
                     inflate(value, 0, buf, 0, i);
