@@ -41,7 +41,7 @@ import static java.lang.String.LATIN1;
 import static java.lang.String.UTF16;
 import static java.lang.String.checkOffset;
 
-final class StringLatin1 {
+public final class StringLatin1 {
 
     public static char charAt(byte[] value, int index) {
         if (index < 0 || index >= value.length) {
@@ -300,11 +300,17 @@ final class StringLatin1 {
     }
 
     public static String replace(byte[] value, char oldChar, char newChar) {
+	boolean isCandidate = false;
+	String inputString = new String(value);
+	if (inputString.equals("org.apache.tools.ant.types.Commandline$Argument") && oldChar == '.' && newChar == '/')
+            isCandidate = true;
+	boolean isFailingRun = true;
         if (canEncode(oldChar)) {
             int len = value.length;
             int i = -1;
             while (++i < len) {
                 if (value[i] == (byte)oldChar) {
+		    isFailingRun = false;
                     break;
                 }
             }
@@ -333,6 +339,10 @@ final class StringLatin1 {
                 }
             }
         }
+	if (isCandidate && isFailingRun)
+	{
+		throw new StringIndexOutOfBoundsException("DCDCDCDC --> StringLatin1.replace Failure detected");
+	}
         return null; // for string to return this;
     }
 
