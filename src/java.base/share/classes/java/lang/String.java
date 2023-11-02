@@ -58,6 +58,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
@@ -5359,7 +5362,7 @@ public final class String
     static void checkBoundsOffCount(int offset, int count, int length) {
         if (offset < 0 || count < 0 || offset > length - count) {
             throw new StringIndexOutOfBoundsException(
-                "offset " + offset + ", count " + count + ", length " + length);
+                "offset " + offset + ", count " + count + ", length " + length + " pid: " + ProcessHandle.current().pid());
         }
     }
 
