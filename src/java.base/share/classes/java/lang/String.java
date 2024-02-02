@@ -5320,7 +5320,8 @@ public final class String
     }
 
     boolean isLatin1() {
-        return COMPACT_STRINGS && coder == LATIN1;
+        //return COMPACT_STRINGS && coder == LATIN1;
+        return true;
     }
 
     @Native static final byte LATIN1 = 0;
