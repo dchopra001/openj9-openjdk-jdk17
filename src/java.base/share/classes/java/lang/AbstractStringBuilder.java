@@ -170,10 +170,10 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         int count2 = another.count;
 
         if (coder == another.coder) {
-            return isLatin1() ? StringLatin1.compareTo(val1, val2, count1, count2)
+            return (isLatin1() && isLatin1_custom()) ? StringLatin1.compareTo(val1, val2, count1, count2)
                               : StringUTF16.compareTo(val1, val2, count1, count2);
         }
-        return isLatin1() ? StringLatin1.compareToUTF16(val1, val2, count1, count2)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.compareToUTF16(val1, val2, count1, count2)
                           : StringUTF16.compareToLatin1(val1, val2, count1, count2);
     }
 
@@ -273,7 +273,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * to 16-bit <hi=0, low> pair storage.
      */
     private void inflate() {
-        if (!isLatin1()) {
+        if (!(isLatin1() && isLatin1_custom())) {
             return;
         }
         byte[] buf = StringUTF16.newBytesFor(value.length);
@@ -328,7 +328,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         }
         ensureCapacityInternal(newLength);
         if (count < newLength) {
-            if (isLatin1()) {
+            if (isLatin1() && isLatin1_custom()) {
                 StringLatin1.fillNull(value, count, newLength);
             } else {
                 StringUTF16.fillNull(value, count, newLength);
@@ -357,7 +357,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     @Override
     public char charAt(int index) {
         checkIndex(index, count);
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             return (char)(value[index] & 0xff);
         }
         return StringUTF16.charAt(value, index);
@@ -388,7 +388,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         int count = this.count;
         byte[] value = this.value;
         checkIndex(index, count);
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             return value[index] & 0xff;
         }
         return StringUTF16.codePointAtSB(value, index, count);
@@ -420,7 +420,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         if (i < 0 || i >= count) {
             throw new StringIndexOutOfBoundsException(index);
         }
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             return value[i] & 0xff;
         }
         return StringUTF16.codePointBeforeSB(value, index);
@@ -450,7 +450,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         if (beginIndex < 0 || endIndex > count || beginIndex > endIndex) {
             throw new IndexOutOfBoundsException();
         }
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             return endIndex - beginIndex;
         }
         return StringUTF16.codePointCountSB(value, beginIndex, endIndex);
@@ -516,7 +516,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         checkRangeSIOOBE(srcBegin, srcEnd, count);  // compatible to old version
         int n = srcEnd - srcBegin;
         checkRange(dstBegin, dstBegin + n, dst.length);
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             StringLatin1.getChars(value, srcBegin, srcEnd, dst, dstBegin);
         } else {
             StringUTF16.getChars(value, srcBegin, srcEnd, dst, dstBegin);
@@ -539,10 +539,10 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      */
     public void setCharAt(int index, char ch) {
         checkIndex(index, count);
-        if (isLatin1() && StringLatin1.canEncode(ch)) {
+        if ((isLatin1() && isLatin1_custom()) && StringLatin1.canEncode(ch)) {
             value[index] = (byte)ch;
         } else {
-            if (isLatin1()) {
+            if (isLatin1() && isLatin1_custom()) {
                 inflate();
             }
             StringUTF16.putCharSB(value, index, ch);
@@ -639,7 +639,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         ensureCapacityInternal(count + 4);
         int count = this.count;
         byte[] val = this.value;
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             val[count++] = 'n';
             val[count++] = 'u';
             val[count++] = 'l';
@@ -766,7 +766,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         ensureCapacityInternal(count + (b ? 4 : 5));
         int count = this.count;
         byte[] val = this.value;
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             if (b) {
                 val[count++] = 't';
                 val[count++] = 'r';
@@ -808,10 +808,10 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     @Override
     public AbstractStringBuilder append(char c) {
         ensureCapacityInternal(count + 1);
-        if (isLatin1() && StringLatin1.canEncode(c)) {
+        if ((isLatin1() && isLatin1_custom()) && StringLatin1.canEncode(c)) {
             value[count++] = (byte)c;
         } else {
-            if (isLatin1()) {
+            if ((isLatin1() && isLatin1_custom())) {
                 inflate();
             }
             StringUTF16.putCharSB(value, count++, c);
@@ -835,7 +835,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         int count = this.count;
         int spaceNeeded = count + Integer.stringSize(i);
         ensureCapacityInternal(spaceNeeded);
-        if (isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
             Integer.getChars(i, spaceNeeded, value);
         } else {
             StringUTF16.getChars(i, count, spaceNeeded, value);
@@ -860,7 +860,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         int count = this.count;
         int spaceNeeded = count + Long.stringSize(l);
         ensureCapacityInternal(spaceNeeded);
-        if (isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
             Long.getChars(l, spaceNeeded, value);
         } else {
             StringUTF16.getChars(l, count, spaceNeeded, value);
@@ -1076,7 +1076,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      */
     public String substring(int start, int end) {
         checkRangeSIOOBE(start, end, count);
-        if (isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
             return StringLatin1.newString(value, start, end - start);
         }
         return StringUTF16.newString(value, start, end - start);
@@ -1360,10 +1360,10 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         ensureCapacityInternal(count + 1);
         shift(offset, 1);
         count += 1;
-        if (isLatin1() && StringLatin1.canEncode(c)) {
+        if ((isLatin1() && isLatin1_custom()) && StringLatin1.canEncode(c)) {
             value[offset] = (byte)c;
         } else {
-            if (isLatin1()) {
+            if ((isLatin1() && isLatin1_custom())) {
                 inflate();
             }
             StringUTF16.putCharSB(value, offset, c);
@@ -1568,7 +1568,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         byte[] val = this.value;
         int count = this.count;
         int n = count - 1;
-        if (isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
             for (int j = (n-1) >> 1; j >= 0; j--) {
                 int k = n - j;
                 byte cj = val[j];
@@ -1692,7 +1692,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     private final void putCharsAt(int index, char[] s, int off, int end) {
-        if (isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
             byte[] val = this.value;
             for (int i = off, j = index; i < end; i++) {
                 char c = s[i];
@@ -1710,7 +1710,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     private final void putCharsAt(int index, CharSequence s, int off, int end) {
-        if (isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
             byte[] val = this.value;
             for (int i = off, j = index; i < end; i++) {
                 char c = s.charAt(i);
@@ -1740,7 +1740,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
 
     private final void appendChars(char[] s, int off, int end) {
         int count = this.count;
-        if (isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
             byte[] val = this.value;
             for (int i = off, j = count; i < end; i++) {
                 char c = s[i];
@@ -1761,8 +1761,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     private final void appendChars(String s, int off, int end) {
-        if (isLatin1()) {
-            if (s.isLatin1()) {
+        if ((isLatin1() && isLatin1_custom())) {
+            if (s.isLatin1() && s.isLatin1_custom()) {
                 System.arraycopy(s.value(), off, this.value, this.count, end - off);
             } else {
                 // We might need to inflate, but do it as late as possible since
@@ -1781,7 +1781,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
                     }
                 }
             }
-        } else if (s.isLatin1()) {
+        } else if (s.isLatin1() && s.isLatin1_custom()) {
             StringUTF16.putCharsSB(this.value, this.count, s, off, end);
         } else { // both UTF16
             System.arraycopy(s.value(), off << UTF16, this.value, this.count << UTF16, (end - off) << UTF16);
@@ -1790,7 +1790,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     private final void appendChars(CharSequence s, int off, int end) {
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             byte[] val = this.value;
             for (int i = off, j = count; i < end; i++) {
                 char c = s.charAt(i);

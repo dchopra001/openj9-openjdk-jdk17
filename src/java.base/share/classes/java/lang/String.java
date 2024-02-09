@@ -2173,7 +2173,7 @@ public final class String
      *             string.
      */
     public char charAt(int index) {
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             return StringLatin1.charAt(value, index);
         } else {
             return StringUTF16.charAt(value, index);
@@ -2228,7 +2228,7 @@ public final class String
      * @since      1.5
      */
     public int codePointAt(int index) {
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             checkIndex(index, value.length);
             return value[index] & 0xff;
         }
@@ -2264,7 +2264,7 @@ public final class String
         if (i < 0 || i >= length()) {
             throw new StringIndexOutOfBoundsException(index);
         }
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             return (value[i] & 0xff);
         }
         return StringUTF16.codePointBefore(value, index);
@@ -2296,7 +2296,7 @@ public final class String
             endIndex > length()) {
             throw new IndexOutOfBoundsException();
         }
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             return endIndex - beginIndex;
         }
         return StringUTF16.codePointCount(value, beginIndex, endIndex);
@@ -2362,7 +2362,7 @@ public final class String
     public void getChars(int srcBegin, int srcEnd, char dst[], int dstBegin) {
         checkBoundsBeginEnd(srcBegin, srcEnd, length());
         checkBoundsOffCount(dstBegin, srcEnd - srcBegin, dst.length);
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             StringLatin1.getChars(value, srcBegin, srcEnd, dst, dstBegin);
         } else {
             StringUTF16.getChars(value, srcBegin, srcEnd, dst, dstBegin);
@@ -2417,7 +2417,7 @@ public final class String
         checkBoundsBeginEnd(srcBegin, srcEnd, length());
         Objects.requireNonNull(dst);
         checkBoundsOffCount(dstBegin, srcEnd - srcBegin, dst.length);
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             StringLatin1.getBytes(value, srcBegin, srcEnd, dst, dstBegin);
         } else {
             StringUTF16.getBytes(value, srcBegin, srcEnd, dst, dstBegin);
@@ -2678,7 +2678,7 @@ public final class String
             return false;
         }
         byte[] val = this.value;
-        if (isLatin1()) {
+        if (isLatin1() && isLatin1_custom()) {
             for (int i = 0; i < n; i++) {
                 if ((val[i] & 0xff) != cs.charAt(i)) {
                     return false;
@@ -2895,7 +2895,7 @@ public final class String
         }
         byte coder = coder();
         if (coder == other.coder()) {
-            if (!isLatin1() && (len > 0)) {
+            if (!(isLatin1() && isLatin1_custom()) && (len > 0)) {
                 toffset = toffset << 1;
                 ooffset = ooffset << 1;
                 len = len << 1;
@@ -3224,7 +3224,7 @@ public final class String
      *          if the character does not occur.
      */
     public int indexOf(int ch, int fromIndex) {
-        return isLatin1() ? StringLatin1.indexOf(value, ch, fromIndex)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.indexOf(value, ch, fromIndex)
                           : StringUTF16.indexOf(value, ch, fromIndex);
     }
 
@@ -3290,7 +3290,7 @@ public final class String
      *          if the character does not occur before that point.
      */
     public int lastIndexOf(int ch, int fromIndex) {
-        return isLatin1() ? StringLatin1.lastIndexOf(value, ch, fromIndex)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.lastIndexOf(value, ch, fromIndex)
                           : StringUTF16.lastIndexOf(value, ch, fromIndex);
     }
 
@@ -3311,7 +3311,7 @@ public final class String
     public int indexOf(String str) {
         byte coder = coder();
         if (coder == str.coder()) {
-            return isLatin1() ? StringLatin1.indexOf(value, str.value)
+            return (isLatin1() && isLatin1_custom()) ? StringLatin1.indexOf(value, str.value)
                               : StringUTF16.indexOf(value, str.value);
         }
         if (coder == LATIN1) {  // str.coder == UTF16
@@ -3515,7 +3515,7 @@ public final class String
             return this;
         }
         int subLen = endIndex - beginIndex;
-        return isLatin1() ? StringLatin1.newString(value, beginIndex, subLen)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.newString(value, beginIndex, subLen)
                           : StringUTF16.newString(value, beginIndex, subLen);
     }
 
@@ -3609,7 +3609,7 @@ public final class String
      */
     public String replace(char oldChar, char newChar) {
         if (oldChar != newChar) {
-            String ret = isLatin1() ? StringLatin1.replace(value, oldChar, newChar)
+            String ret = (isLatin1() && isLatin1_custom()) ? StringLatin1.replace(value, oldChar, newChar)
                                     : StringUTF16.replace(value, oldChar, newChar);
             if (ret != null) {
                 return ret;
@@ -3772,9 +3772,9 @@ public final class String
                 return replace(trgtStr.charAt(0), replStr.charAt(0));
             }
 
-            boolean thisIsLatin1 = this.isLatin1();
-            boolean trgtIsLatin1 = trgtStr.isLatin1();
-            boolean replIsLatin1 = replStr.isLatin1();
+            boolean thisIsLatin1 = (this.isLatin1() && this.isLatin1_custom());
+            boolean trgtIsLatin1 = (trgtStr.isLatin1() && trgtStr.isLatin1_custom());
+            boolean replIsLatin1 = (replStr.isLatin1() && replStr.isLatin1_custom());
             String ret = (thisIsLatin1 && trgtIsLatin1 && replIsLatin1)
                     ? StringLatin1.replace(value, thisLen,
                                            trgtStr.value, trgtLen,
@@ -4194,7 +4194,7 @@ public final class String
      * @since   1.1
      */
     public String toLowerCase(Locale locale) {
-        return isLatin1() ? StringLatin1.toLowerCase(this, value, locale)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.toLowerCase(this, value, locale)
                           : StringUTF16.toLowerCase(this, value, locale);
     }
 
@@ -4275,7 +4275,7 @@ public final class String
      * @since   1.1
      */
     public String toUpperCase(Locale locale) {
-        return isLatin1() ? StringLatin1.toUpperCase(this, value, locale)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.toUpperCase(this, value, locale)
                           : StringUTF16.toUpperCase(this, value, locale);
     }
 
@@ -4335,7 +4335,7 @@ public final class String
      *          has no leading or trailing space.
      */
     public String trim() {
-        String ret = isLatin1() ? StringLatin1.trim(value)
+        String ret = (isLatin1() && isLatin1_custom()) ? StringLatin1.trim(value)
                                 : StringUTF16.trim(value);
         return ret == null ? this : ret;
     }
@@ -4367,7 +4367,7 @@ public final class String
      * @since 11
      */
     public String strip() {
-        String ret = isLatin1() ? StringLatin1.strip(value)
+        String ret = (isLatin1() && isLatin1_custom()) ? StringLatin1.strip(value)
                                 : StringUTF16.strip(value);
         return ret == null ? this : ret;
     }
@@ -4397,7 +4397,7 @@ public final class String
      * @since 11
      */
     public String stripLeading() {
-        String ret = isLatin1() ? StringLatin1.stripLeading(value)
+        String ret = (isLatin1() && isLatin1_custom()) ? StringLatin1.stripLeading(value)
                                 : StringUTF16.stripLeading(value);
         return ret == null ? this : ret;
     }
@@ -4427,7 +4427,7 @@ public final class String
      * @since 11
      */
     public String stripTrailing() {
-        String ret = isLatin1() ? StringLatin1.stripTrailing(value)
+        String ret = (isLatin1() && isLatin1_custom()) ? StringLatin1.stripTrailing(value)
                                 : StringUTF16.stripTrailing(value);
         return ret == null ? this : ret;
     }
@@ -4480,7 +4480,7 @@ public final class String
      * @since 11
      */
     public Stream<String> lines() {
-        return isLatin1() ? StringLatin1.lines(value) : StringUTF16.lines(value);
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.lines(value) : StringUTF16.lines(value);
     }
 
     /**
@@ -4536,12 +4536,12 @@ public final class String
     }
 
     private int indexOfNonWhitespace() {
-        return isLatin1() ? StringLatin1.indexOfNonWhitespace(value)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.indexOfNonWhitespace(value)
                           : StringUTF16.indexOfNonWhitespace(value);
     }
 
     private int lastIndexOfNonWhitespace() {
-        return isLatin1() ? StringLatin1.lastIndexOfNonWhitespace(value)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.lastIndexOfNonWhitespace(value)
                           : StringUTF16.lastIndexOfNonWhitespace(value);
     }
 
@@ -4871,7 +4871,7 @@ public final class String
     @Override
     public IntStream chars() {
         return StreamSupport.intStream(
-            isLatin1() ? new StringLatin1.CharsSpliterator(value, Spliterator.IMMUTABLE)
+            (isLatin1() && isLatin1_custom()) ? new StringLatin1.CharsSpliterator(value, Spliterator.IMMUTABLE)
                        : new StringUTF16.CharsSpliterator(value, Spliterator.IMMUTABLE),
             false);
     }
@@ -4891,7 +4891,7 @@ public final class String
     @Override
     public IntStream codePoints() {
         return StreamSupport.intStream(
-            isLatin1() ? new StringLatin1.CharsSpliterator(value, Spliterator.IMMUTABLE)
+            (isLatin1() && isLatin1_custom()) ? new StringLatin1.CharsSpliterator(value, Spliterator.IMMUTABLE)
                        : new StringUTF16.CodePointsSpliterator(value, Spliterator.IMMUTABLE),
             false);
     }
@@ -4904,7 +4904,7 @@ public final class String
      *          the character sequence represented by this string.
      */
     public char[] toCharArray() {
-        return isLatin1() ? StringLatin1.toChars(value)
+        return (isLatin1() && isLatin1_custom()) ? StringLatin1.toChars(value)
                           : StringUTF16.toChars(value);
     }
 
@@ -5324,7 +5324,7 @@ public final class String
     String(AbstractStringBuilder asb, Void sig) {
         byte[] val = asb.getValue();
         int length = asb.length();
-        if (asb.isLatin1()) {
+        if (asb.isLatin1() && asb.isLatin1_custom()) {
             this.coder = LATIN1;
             this.coder2 = LATIN1;
             this.value = Arrays.copyOfRange(val, 0, length);
