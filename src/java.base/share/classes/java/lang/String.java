@@ -176,6 +176,8 @@ public final class String
      */
     private final byte coder;
 
+    private final byte coder2;
+
     /** Cache the hash code for the string */
     private int hash; // Default to 0
 
@@ -228,6 +230,7 @@ public final class String
      */
     /* OpenJ9 String specific */
     static final boolean COMPACT_STRINGS = com.ibm.oti.vm.VM.J9_STRING_COMPRESSION_ENABLED;
+    static final boolean COMPACT_STRINGS2 = com.ibm.oti.vm.VM.J9_STRING_COMPRESSION_ENABLED;
 
 	// Used to represent the value of an empty String
 	private static final byte[] emptyValue = new byte[0];
@@ -421,6 +424,7 @@ public final class String
     public String() {
         this.value = "".value;
         this.coder = "".coder;
+        this.coder2 = "".coder;
     }
 
     /**
@@ -437,6 +441,7 @@ public final class String
     public String(String original) {
         this.value = original.value;
         this.coder = original.coder;
+        this.coder2 = original.coder;
         this.hash = original.hash;
     }
 
@@ -516,18 +521,21 @@ public final class String
         if (count == 0) {
             this.value = "".value;
             this.coder = "".coder;
+            this.coder2 = "".coder;
             return;
         }
         if (COMPACT_STRINGS) {
             byte[] val = StringLatin1.toBytes(codePoints, offset, count);
             if (val != null) {
                 this.coder = LATIN1;
+                this.coder2 = LATIN1;
                 this.value = val;
                 return;
             }
             initCompressionFlag();
         }
         this.coder = UTF16;
+        this.coder2 = UTF16;
         this.value = StringUTF16.toBytes(codePoints, offset, count);
     }
 
@@ -577,11 +585,13 @@ public final class String
         if (count == 0) {
             this.value = "".value;
             this.coder = "".coder;
+            this.coder2 = "".coder;
             return;
         }
         if (COMPACT_STRINGS && (byte)hibyte == 0) {
             this.value = Arrays.copyOfRange(ascii, offset, offset + count);
             this.coder = LATIN1;
+            this.coder2 = LATIN1;
         } else {
             hibyte <<= 8;
             byte[] val = StringUTF16.newBytesFor(count);
@@ -590,6 +600,7 @@ public final class String
             }
             this.value = val;
             this.coder = UTF16;
+            this.coder2 = UTF16;
             if (COMPACT_STRINGS) {
                 initCompressionFlag();
             }
@@ -706,10 +717,12 @@ public final class String
         if (length == 0) {
             this.value = "".value;
             this.coder = "".coder;
+            this.coder2 = "".coder;
         } else if (charset == UTF_8.INSTANCE) {
             if (COMPACT_STRINGS && !StringCoding.hasNegatives(bytes, offset, length)) {
                 this.value = Arrays.copyOfRange(bytes, offset, offset + length);
                 this.coder = LATIN1;
+                this.coder2 = LATIN1;
             } else {
                 int sl = offset + length;
                 int dp = 0;
@@ -741,6 +754,7 @@ public final class String
                         }
                         this.value = dst;
                         this.coder = LATIN1;
+                        this.coder2 = LATIN1;
                         return;
                     }
                 }
@@ -757,19 +771,23 @@ public final class String
                 }
                 this.value = dst;
                 this.coder = UTF16;
+                this.coder2 = UTF16;
             }
         } else if (charset == ISO_8859_1.INSTANCE) {
             if (COMPACT_STRINGS) {
                 this.value = Arrays.copyOfRange(bytes, offset, offset + length);
                 this.coder = LATIN1;
+                this.coder2 = LATIN1;
             } else {
                 this.value = StringLatin1.inflate(bytes, offset, length);
                 this.coder = UTF16;
+                this.coder2 = UTF16;
             }
         } else if (charset == US_ASCII.INSTANCE) {
             if (COMPACT_STRINGS && !StringCoding.hasNegatives(bytes, offset, length)) {
                 this.value = Arrays.copyOfRange(bytes, offset, offset + length);
                 this.coder = LATIN1;
+                this.coder2 = LATIN1;
             } else {
                 byte[] dst = new byte[length << 1];
                 int dp = 0;
@@ -779,6 +797,7 @@ public final class String
                 }
                 this.value = dst;
                 this.coder = UTF16;
+                this.coder2 = UTF16;
             }
         } else {
             // (1)We never cache the "external" cs, the only benefit of creating
@@ -797,10 +816,12 @@ public final class String
                     if (COMPACT_STRINGS) {
                         this.value = Arrays.copyOfRange(bytes, offset, offset + length);
                         this.coder = LATIN1;
+                        this.coder2 = LATIN1;
                         return;
                     }
                     this.value = StringLatin1.inflate(bytes, offset, length);
                     this.coder = UTF16;
+                    this.coder2 = UTF16;
                     return;
                 }
 
@@ -810,6 +831,7 @@ public final class String
                     ad.decodeToLatin1(bytes, offset, length, dst);
                     this.value = dst;
                     this.coder = LATIN1;
+                    this.coder2 = LATIN1;
                     return;
                 }
 
@@ -823,11 +845,13 @@ public final class String
                     if (bs != null) {
                         value = bs;
                         coder = LATIN1;
+                        coder2 = LATIN1;
                         return;
                     }
                     initCompressionFlag();
                 }
                 coder = UTF16;
+                coder2 = UTF16;
                 value = StringUTF16.toBytes(ca, 0, clen);
                 return;
             }
@@ -855,10 +879,12 @@ public final class String
                 if (bs != null) {
                     value = bs;
                     coder = LATIN1;
+                    coder2 = LATIN1;
                     return;
                 }
             }
-            coder = UTF16;
+	    coder = UTF16;
+            coder2 = UTF16;
             value = StringUTF16.toBytes(ca, 0, caLen);
         }
         if (COMPACT_STRINGS && coder == UTF16) {
@@ -1566,6 +1592,7 @@ public final class String
 		if (COMPACT_STRINGS && (null == compressionFlag || s.coder == LATIN1) && c <= 255) {
 			value = new byte[concatlen];
 			coder = LATIN1;
+            coder2 = LATIN1;
 
 			compressedArrayCopy(s.value, 0, value, 0, slen);
 
@@ -1573,6 +1600,7 @@ public final class String
 		} else {
 			value = StringUTF16.newBytesFor(concatlen);
 			coder = UTF16;
+            coder2 = UTF16;
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s.coder == LATIN1) {
@@ -1700,12 +1728,14 @@ public final class String
 		if (COMPACT_STRINGS && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
 			value = new byte[concatlen];
 			coder = LATIN1;
+            coder2 = LATIN1;
 
 			compressedArrayCopy(s1.value, 0, value, 0, s1len);
 			compressedArrayCopy(s2.value, 0, value, s1len, s2len);
 		} else {
 			value = StringUTF16.newBytesFor(concatlen);
 			coder = UTF16;
+            coder2 = UTF16;
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s1.coder == LATIN1) {
@@ -1757,6 +1787,7 @@ public final class String
 		if (COMPACT_STRINGS && (null == compressionFlag || (s1.coder | s2.coder | s3.coder) == LATIN1)) {
 			value = new byte[concatlen];
 			coder = LATIN1;
+            coder2 = LATIN1;
 
 			compressedArrayCopy(s1.value, 0, value, 0, s1len);
 			compressedArrayCopy(s2.value, 0, value, s1len, s2len);
@@ -1764,6 +1795,7 @@ public final class String
 		} else {
 			value = StringUTF16.newBytesFor(concatlen);
 			coder = UTF16;
+            coder2 = UTF16;
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s1.coder == LATIN1) {
@@ -1826,6 +1858,7 @@ public final class String
 		if (COMPACT_STRINGS && (null == compressionFlag || s1.coder == LATIN1)) {
 			value = new byte[len];
 			coder = LATIN1;
+            coder2 = LATIN1;
 
 			// Copy in v1
 			int index = len - 1;
@@ -1849,6 +1882,7 @@ public final class String
 		} else {
 			value = StringUTF16.newBytesFor(len);
 			coder = UTF16;
+            coder2 = UTF16;
 
 			// Copy in v1
 			int index = len - 1;
@@ -1935,6 +1969,7 @@ public final class String
 		if (COMPACT_STRINGS && (null == compressionFlag || (s1.coder | s2.coder | s3.coder) == LATIN1)) {
 			value = new byte[len];
 			coder = LATIN1;
+            coder2 = LATIN1;
 
 			int start = len;
 
@@ -1986,6 +2021,7 @@ public final class String
 		} else {
 			value = StringUTF16.newBytesFor(len);
 			coder = UTF16;
+            coder2 = UTF16;
 
 			int start = len;
 
@@ -5263,6 +5299,7 @@ public final class String
         if (len == 0) {
             this.value = "".value;
             this.coder = "".coder;
+            this.coder2 = "".coder;
             return;
         }
         if (COMPACT_STRINGS) {
@@ -5270,11 +5307,13 @@ public final class String
             if (val != null) {
                 this.value = val;
                 this.coder = LATIN1;
+                this.coder2 = LATIN1;
                 return;
             }
             initCompressionFlag();
 		}
         this.coder = UTF16;
+        this.coder2 = UTF16;
         this.value = StringUTF16.toBytes(value, off, len);
     }
 
@@ -5287,18 +5326,21 @@ public final class String
         int length = asb.length();
         if (asb.isLatin1()) {
             this.coder = LATIN1;
+            this.coder2 = LATIN1;
             this.value = Arrays.copyOfRange(val, 0, length);
         } else {
             if (COMPACT_STRINGS) {
                 byte[] buf = StringUTF16.compress(val, 0, length);
                 if (buf != null) {
                     this.coder = LATIN1;
+                    this.coder2 = LATIN1;
                     this.value = buf;
                     return;
                 }
                 initCompressionFlag();
             }
             this.coder = UTF16;
+            this.coder2 = UTF16;
             this.value = Arrays.copyOfRange(val, 0, length << 1);
         }
     }
@@ -5309,6 +5351,7 @@ public final class String
     String(byte[] value, byte coder) {
         this.value = value;
         this.coder = coder;
+        this.coder2 = coder;
     }
 
     byte coder() {
@@ -5321,6 +5364,10 @@ public final class String
 
     boolean isLatin1() {
         return COMPACT_STRINGS && coder == LATIN1;
+    }
+
+    boolean isLatin1_custom() {
+        return COMPACT_STRINGS2 && coder2 == LATIN1;
     }
 
     @Native static final byte LATIN1 = 0;

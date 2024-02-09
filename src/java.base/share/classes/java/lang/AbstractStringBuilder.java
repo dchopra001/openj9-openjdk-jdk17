@@ -34,6 +34,7 @@ import java.util.stream.StreamSupport;
 import jdk.internal.util.ArraysSupport;
 
 import static java.lang.String.COMPACT_STRINGS;
+import static java.lang.String.COMPACT_STRINGS2;
 import static java.lang.String.UTF16;
 import static java.lang.String.LATIN1;
 import static java.lang.String.checkIndex;
@@ -66,6 +67,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      */
     byte coder;
 
+    byte coder2;
+
     /**
      * The count is the number of characters used.
      */
@@ -87,9 +90,11 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         if (COMPACT_STRINGS) {
             value = new byte[capacity];
             coder = LATIN1;
+            coder2 = LATIN1;
         } else {
             value = StringUTF16.newBytesFor(capacity);
             coder = UTF16;
+            coder2 = LATIN1;
         }
     }
 
@@ -107,6 +112,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
                 ? length + 16 : Integer.MAX_VALUE;
         final byte initCoder = str.coder();
         coder = initCoder;
+        coder2 = initCoder;
         value = (initCoder == LATIN1)
                 ? new byte[capacity] : StringUTF16.newBytesFor(capacity);
         append(str);
@@ -142,6 +148,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         }
 
         coder = initCoder;
+        coder2 = initCoder;
         value = (initCoder == LATIN1)
                 ? new byte[capacity] : StringUTF16.newBytesFor(capacity);
         append(seq);
@@ -273,6 +280,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         StringLatin1.inflate(value, 0, buf, 0, count);
         this.value = buf;
         this.coder = UTF16;
+        this.coder2 = UTF16;
     }
 
     /**
@@ -1662,10 +1670,12 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
             this.value = StringUTF16.compress(value, off, len);
             if (this.value != null) {
                 this.coder = LATIN1;
+                this.coder2 = LATIN1;
                 return;
             }
         }
         this.coder = UTF16;
+        this.coder2 = UTF16;
         this.value = StringUTF16.toBytes(value, off, len);
     }
 
@@ -1675,6 +1685,10 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
 
     final boolean isLatin1() {
         return COMPACT_STRINGS && coder == LATIN1;
+    }
+
+    final boolean isLatin1_custom() {
+        return COMPACT_STRINGS2 && coder2 == LATIN1;
     }
 
     private final void putCharsAt(int index, char[] s, int off, int end) {
