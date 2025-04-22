@@ -57,10 +57,21 @@ public class SingleByte
         private final char[] b2c;
         private final boolean isASCIICompatible;
         private final boolean isLatin1Decodable;
+	private final byte[] b2cBytes;
 
         public Decoder(Charset cs, char[] b2c) {
             super(cs, 1.0f, 1.0f);
             this.b2c = b2c;
+            b2cBytes = new byte[b2c.length];
+	    for (int i = 0; i < b2c.length; i++)
+            {
+		    b2cBytes[i] = (byte)b2c[i];
+	    }
+	    for (int i = 0; i < b2cBytes.length/2; i++)
+		    b2cBytes[i] = (byte)b2c[i+128];
+	    for (int i = 0; i < b2c.length/2; i++)
+		    b2cBytes[i+128] = (byte)b2c[i];
+
             this.isASCIICompatible = false;
             this.isLatin1Decodable = false;
         }
@@ -68,6 +79,15 @@ public class SingleByte
         public Decoder(Charset cs, char[] b2c, boolean isASCIICompatible) {
             super(cs, 1.0f, 1.0f);
             this.b2c = b2c;
+	    b2cBytes = new byte[b2c.length];
+	    for (int i = 0; i < b2c.length; i++)
+            {
+		    b2cBytes[i] = (byte)b2c[i];
+	    }
+	    for (int i = 0; i < b2cBytes.length/2; i++)
+		    b2cBytes[i] = (byte)b2c[i+128];
+	    for (int i = 0; i < b2c.length/2; i++)
+		    b2cBytes[i+128] = (byte)b2c[i];
             this.isASCIICompatible = isASCIICompatible;
             this.isLatin1Decodable = false;
         }
@@ -75,6 +95,15 @@ public class SingleByte
         public Decoder(Charset cs, char[] b2c, boolean isASCIICompatible, boolean isLatin1Decodable) {
             super(cs, 1.0f, 1.0f);
             this.b2c = b2c;
+	    b2cBytes = new byte[b2c.length];
+	    for (int i = 0; i < b2c.length; i++)
+            {
+		    b2cBytes[i] = (byte)b2c[i];
+	    }
+	    for (int i = 0; i < b2cBytes.length/2; i++)
+		    b2cBytes[i] = (byte)b2c[i+128];
+	    for (int i = 0; i < b2c.length/2; i++)
+		    b2cBytes[i+128] = (byte)b2c[i];
             this.isASCIICompatible = isASCIICompatible;
             this.isLatin1Decodable = isLatin1Decodable;
         }
@@ -145,16 +174,20 @@ public class SingleByte
             repl = newReplacement.charAt(0);
         }
 
+	public int decodeToLatin1Impl(byte[] src, int sp, int len, byte[] dst, int dp, byte[] map) {
+            while (dp < len) {
+                dst[dp++] = map[(src[sp++]) & 0xff];
+            }
+            return dp;
+        }
+
+
         @Override
         public int decodeToLatin1(byte[] src, int sp, int len, byte[] dst) {
             if (len > dst.length)
                 len = dst.length;
 
-            int dp = 0;
-            while (dp < len) {
-                dst[dp++] = (byte)decode(src[sp++]);
-            }
-            return dp;
+            return decodeToLatin1Impl(src, sp, len, dst, 0,  b2cBytes);
         }
 
         @Override
