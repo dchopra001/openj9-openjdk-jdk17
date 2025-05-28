@@ -57,12 +57,17 @@ public class SingleByte
         private final char[] b2c;
         private final boolean isASCIICompatible;
         private final boolean isLatin1Decodable;
-	private final boolean isIBM1047;
+//	private final boolean isIBM1047;
+	private byte[] b2cBytes;
 
         public Decoder(Charset cs, char[] b2c) {
             super(cs, 1.0f, 1.0f);
             this.b2c = b2c;
-	    isIBM1047 = cs.name().equals("IBM1047");
+	    b2cBytes = null;
+	    if (cs.name().equals("IBM1047")) {
+                translateCharMap();
+	    }
+//	    isIBM1047 = cs.name().equals("IBM1047");
             this.isASCIICompatible = false;
             this.isLatin1Decodable = false;
         }
@@ -70,7 +75,11 @@ public class SingleByte
         public Decoder(Charset cs, char[] b2c, boolean isASCIICompatible) {
             super(cs, 1.0f, 1.0f);
             this.b2c = b2c;
-	    isIBM1047 = cs.name().equals("IBM1047");
+	    b2cBytes = null;
+	    if (cs.name().equals("IBM1047")) {
+                translateCharMap();
+	    }
+	    //isIBM1047 = cs.name().equals("IBM1047");
             this.isASCIICompatible = isASCIICompatible;
             this.isLatin1Decodable = false;
         }
@@ -79,7 +88,11 @@ public class SingleByte
             super(cs, 1.0f, 1.0f);
 //	    System.out.println("Decoder: " + cs.name());
             this.b2c = b2c;
-	    isIBM1047 = cs.name().equals("IBM1047");
+	    b2cBytes = null;
+	    if (cs.name().equals("IBM1047")) {
+                translateCharMap();
+	    }
+	    //isIBM1047 = cs.name().equals("IBM1047");
             this.isASCIICompatible = isASCIICompatible;
             this.isLatin1Decodable = isLatin1Decodable;
         }
@@ -157,6 +170,14 @@ public class SingleByte
             return dp;
         }
 
+	private void translateCharMap() {
+            b2cBytes = new byte[b2c.length];
+	    for (int i = 0; i < b2cBytes.length/2; i++) {
+                byte temp = (byte)b2c[i];
+		b2cBytes[i] = (byte)b2c[i+128];
+	        b2cBytes[i+128] = temp;
+	    }
+	}
 
         @Override
         public int decodeToLatin1(byte[] src, int sp, int len, byte[] dst) {
@@ -164,13 +185,13 @@ public class SingleByte
             if (len > dst.length)
                 len = dst.length;
 	    int dp = 0;
-            if (isIBM1047) {
-	        byte[] b2cBytes = new byte[b2c.length];
+            if (b2cBytes != null) {
+	        /*byte[] b2cBytes = new byte[b2c.length];
 	        for (int i = 0; i < b2cBytes.length/2; i++) {
                         byte temp = (byte)b2c[i];
 		        b2cBytes[i] = (byte)b2c[i+128];
 		        b2cBytes[i+128] = temp;
-	        }
+	        }*/
                 dp = decodeToLatin1Impl(src, sp, len, dst, dp,  b2cBytes);
 	    }
             else {
