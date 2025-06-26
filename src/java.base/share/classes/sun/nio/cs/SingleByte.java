@@ -317,14 +317,20 @@ public class SingleByte
         public int encodeFromLatin1(byte[] src, int sp, int len, byte[] dst) {
             int dp = 0;
             int sl = sp + Math.min(len, dst.length);
+            int[] int_src = new int[sl];
             while (sp < sl) {
-                char c = (char)(src[sp++] & 0xff);
-                int b = encode(c);
-                if (b == UNMAPPABLE_ENCODING) {
-                    dst[dp++] = repl;
-                } else {
-                    dst[dp++] = (byte)b;
-                }
+                genIntSrc(src, sp, int_src);
+                dp = popDstArray(int_src, dp, dst);
+            }
+            return dp;
+        }
+
+        private void popDstArray(int[] int_src, int dp, byte[] dst) {
+            for (int i = 0; i < int_src.length; i++) {
+                if (int_src[i] == UNMAPPABLE_ENCODING)
+                    dst[dp++] =  ;
+                else
+                    dst[dp++] = (byte)int_src[i];
             }
             return dp;
         }
