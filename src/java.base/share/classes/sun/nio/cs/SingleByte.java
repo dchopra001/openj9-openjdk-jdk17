@@ -335,6 +335,15 @@ public class SingleByte
             return dp;
         }
 
+        private void genIntSrc(byte[] src, int sp, int[] int_dst) {
+            for (int i = 0; i < int_dst.length; i++) {
+                char c = (char)(src[sp++] & 0xff);
+                char index = c2bIndex[c >> 8];
+                int_dst[i] = index == UNMAPPABLE_ENCODING ? UNMAPPABLE_ENCODING :
+                                                           c2b[index + (c & 0xff)];
+            }
+        }
+
         @Override
         public int encodeFromUTF16(byte[] src, int sp, int len, byte[] dst) {
             int dp = 0;
