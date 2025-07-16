@@ -189,13 +189,31 @@ public class SingleByte
         private final char[] c2b;
         private final char[] c2bIndex;
         private final boolean isASCIICompatible;
+        // This is a custom map that is used to create a 1:1 translation for certain charsets (ex. Encoding from ASCII to IBM1047).
+        private final byte[] b2bMap;
 
         public Encoder(Charset cs, char[] c2b, char[] c2bIndex, boolean isASCIICompatible) {
             super(cs, 1.0f, 1.0f);
             this.c2b = c2b;
             this.c2bIndex = c2bIndex;
             this.isASCIICompatible = isASCIICompatible;
+            this.b2bMap = makeB2BMap(cs);
         }
+
+        private byte[] makeB2BMap(Charset cs) {
+            if ("IBM1047".equals(cs.name())) {
+                byte[] tmpTable = {0, 1, 2, 3, 55, 45, 46, 47, 22, 5, 21, 11, 12, 13, 14, 15, 16, 17, 18,
+                                  19, 60, 61, 50, 38, 24, 25, 63, 39, 28, 29, 30, 31, 64, 90, 127, 123, 91,
+                                  108, 80, 125, 77, 93, 92, 78, 107, 96, 75, 97, -16, -15, -14, -13, -12, -11,
+                                  -10, -9, -8, -7, 122, 94, 76, 126, 110, 111, 124, -63, -62, -61, -60, -59,
+                                  -58, -57, -56, -55, -47, -46, -45, -44, -43, -42, -41, -40, -39, -30, -29,
+                                  -28, -27, -26, -25, -24, -23, -83, -32, -67, 95, 109, 121, -127, -126, -125,
+                                  -124, -123, -122, -121, -120, -119, -111, -110, -109, -108, -107, -106, -105,
+                                  -104, -103, -94, -93, -92, -91, -90, -89, -88, -87, -64, 79, -48, -95, 7};
+                return tmpTable;
+            }
+            return null;
+         }
 
         public boolean canEncode(char c) {
             return encode(c) != UNMAPPABLE_ENCODING;
@@ -313,9 +331,20 @@ public class SingleByte
             return dp;
         }
 
+        private int encodeFromLatin1Impl(byte[] src, int sp, int len, byte[] dst, int dp, byte[] translationTable) {
+            for (int i = 0; i < len; i++) {
+                dst[dp++] = translationTable[src[sp++] & 0xff];
+            }
+            return dp;
+        }
+
         @Override
         public int encodeFromLatin1(byte[] src, int sp, int len, byte[] dst) {
             int dp = 0;
+            if (null != b2bMap) {
+                dp = encodeFromLatin1Impl(src, sp, len, dst, dp, b2bMap);
+                return dp;
+            }
             int sl = sp + Math.min(len, dst.length);
             while (sp < sl) {
                 char c = (char)(src[sp++] & 0xff);
